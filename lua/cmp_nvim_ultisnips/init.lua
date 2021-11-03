@@ -7,6 +7,16 @@ source.new = function()
   return setmetatable({}, { __index = source })
 end
 
+local function has_value(tab, val)
+  for index, value in ipairs(tab) do
+    if value == val then
+      return true
+    end
+  end
+
+  return false
+end
+
 source.get_keyword_pattern = function()
   return '\\%([^[:alnum:][:blank:]]\\|\\w\\+\\)'
 end
@@ -19,14 +29,18 @@ function source:complete(_, callback)
   local items = {}
 
   local snippets = cmp_snippets.load()
-  for key, value in pairs(snippets) do
-    local item = {
-      word =  key,
-      label =  key,
-      user_data = value,
-      kind = cmp.lsp.CompletionItemKind.Snippet,
-    }
-    items[#items+1] = item
+  local allowed = vim.fn["cmp_nvim_ultisnips#get_current_snippets"]()
+
+  for key, value in ipairs(snippets) do
+    if has_value(allowed, key) then
+      local item = {
+        word =  key,
+        label =  key,
+        user_data = value,
+        kind = cmp.lsp.CompletionItemKind.Snippet,
+      }
+      items[#items+1] = item
+    end
   end
 
   callback(items)
